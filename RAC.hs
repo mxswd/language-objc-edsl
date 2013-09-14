@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances, DataKinds, GADTs, KindSignatures, ExistentialQuantification #-}
 module RAC where
 
 import Data.List
@@ -8,20 +8,24 @@ import System.IO.Unsafe
 import Data.Unique
 import Control.Applicative
 
-data RACSignal = RACSignal String
-               | Rcl_frameSignal String
-               | RCLBox Double
+-- Foreign Kind
+data FK = FKRect | FKSize
 
-instance Show RACSignal where
-  show (RACSignal x) = x
+data RACSignal :: FK -> * where
+  RACSigSize :: String -> RACSignal FKSize
+  Rcl_frameSignal :: String -> RACSignal FKRect
+  RCLBox :: Double -> RACSignal FKRect
+
+instance Show (RACSignal a) where
+  show (RACSigSize x) = x
   show (Rcl_frameSignal x) = x <> ".rcl_frameSignal"
   show (RCLBox d) = "RCLBox(" <> show d <> ")"
 
 data CGRect = CGRectZero | CGRectMake String deriving Show
 
 type Var = String
-data Bind = Bind Var RACSignal
-          | BindTuple Var Var (RACSignal, RACSignal)
+data Bind = forall a . Bind Var (RACSignal a)
+          | forall a . BindTuple Var Var (RACSignal a, RACSignal a)
 
 data RAC a = RAC a [Bind]
 
@@ -49,11 +53,11 @@ instance Monad RAC where
 class RACT a where
   rep :: a -> Bind
 
-fresh :: RACSignal -> RAC Var
+fresh :: RACSignal a -> RAC Var
 fresh x = let f = "f_" <> (show . hashUnique . unsafePerformIO $ newUnique)
           in RAC f [Bind f x]
 
-fresh2 :: RACSignal -> RAC (Var, Var)
+fresh2 :: RACSignal a -> RAC (Var, Var)
 fresh2 x = let (f, g) = ("f_" <> (show . hashUnique . unsafePerformIO $ newUnique), "f_" <> (show . hashUnique . unsafePerformIO $ newUnique))
            in RAC (f, g) [BindTuple f g (x, x)]
 

@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 module RCL where
 
 import Data.List
@@ -52,9 +53,9 @@ rcl_frameSignal :: String -> RAC Var
 rcl_frameSignal x = fresh $ Rcl_frameSignal x
 
 -- [x insetWidth:RCLBox(32.25) height:RCLBox(16.75) nullRect:CGRectZero]
-insetWidthHeightNull :: RACSignal -> RACSignal -> CGRect -> Var -> RAC Var
-insetWidthHeightNull w h n s = fresh $ RACSignal $ "[" <> s <> " insetWidth:" <> show w <> " height:" <> show h <> " nullRect:" <> show n <> "]"
+insetWidthHeightNull :: RACSignal FKRect -> RACSignal FKRect -> CGRect -> Var -> RAC Var
+insetWidthHeightNull w h n s = fresh $ RACSigSize $ "[" <> s <> " insetWidth:" <> show w <> " height:" <> show h <> " nullRect:" <> show n <> "]"
 
 -- [x divideWithAmount:RCLBox(20) padding:self.verticalPadding fromEdge:NSLayoutAttributeBottom];
-divideWithAmountPaddingEdge :: RACSignal -> RACSignal -> NSLayout -> Var -> RAC (Var, Var)
-divideWithAmountPaddingEdge d p e s = fresh2 $ RACSignal $ "[" <> s <> " divideWithAmount:" <> show d <> " padding:" <> show p <> " fromEdge:" <> show e <> "]"
+divideWithAmountPaddingEdge :: RACSignal FKRect -> RACSignal FKSize -> NSLayout -> Var -> RAC (Var, Var)
+divideWithAmountPaddingEdge d p e s = fresh2 $ RACSigSize $ "[" <> s <> " divideWithAmount:" <> show d <> " padding:" <> show p <> " fromEdge:" <> show e <> "]"
