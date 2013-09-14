@@ -6,6 +6,7 @@ import Data.Monoid
 import Control.Monad.State
 import System.IO.Unsafe
 import Data.Unique
+import Control.Applicative
 
 data RACSignal = RACSignal String
                | Rcl_frameSignal String
@@ -32,6 +33,13 @@ instance Show Bind where
 showCode :: Bind -> String
 showCode b@(Bind _ x) = show b <> " = " <> show x <> ";\n"
 showCode b@(BindTuple _ _ (x, _)) = show b <> " = " <> show x <> ";\n"
+
+instance Functor RAC where
+  fmap = liftM
+
+instance Applicative RAC where
+  pure = return
+  (<*>) = ap
 
 instance Monad RAC where
   return x = RAC x []
