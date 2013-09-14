@@ -12,9 +12,9 @@ import Control.Applicative
 data FK = FKRect | FKSize
 
 data RACSignal :: FK -> * where
-  RACSigSize :: String -> RACSignal FKSize
+  RACSigSize      :: String -> RACSignal FKSize
   Rcl_frameSignal :: String -> RACSignal FKRect
-  RCLBox :: Double -> RACSignal FKRect
+  RCLBox          :: Double -> RACSignal FKRect
 
 instance Show (RACSignal a) where
   show (RACSigSize x) = x
