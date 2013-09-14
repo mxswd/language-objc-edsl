@@ -1,18 +1,21 @@
 {-# LANGUAGE DataKinds, RankNTypes, TypeOperators, GADTs, KindSignatures, FlexibleContexts, FlexibleInstances, InstanceSigs, MultiParamTypeClasses, TypeFamilies #-}
+module RACStream where
+
 import RAC
 import qualified Prelude as P
 
+
 -- the length of a view
-length :: RACSignal FKSize
-length = undefined
+sizeSig :: RACSignal FKSize
+sizeSig = undefined
 
 -- take length and turn into square rectangle
-square :: RACSignal FKSize -> RACSignal FKRect
-square = undefined
+squareFun :: RACSignal FKSize -> RACSignal FKRect
+squareFun = undefined
 
 -- you can check using those functions together give the correct type
 f :: RACSignal (FKTuple FKSize FKRect)
-f = take 4 (zipWith length (map (square) length))
+f = take 4 (zipWith sizeSig (map (squareFun) sizeSig))
 
 undefined = P.undefined
 
