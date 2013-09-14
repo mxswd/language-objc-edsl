@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, DataKinds, GADTs, KindSignatures, ExistentialQuantification #-}
+{-# LANGUAGE FlexibleInstances, DataKinds, GADTs, KindSignatures, ExistentialQuantification, RankNTypes, TypeOperators, TypeFamilies, FlexibleInstances, InstanceSigs, MultiParamTypeClasses, FlexibleContexts #-}
 module RAC where
 
 import Data.List
@@ -9,17 +9,25 @@ import Data.Unique
 import Control.Applicative
 
 -- Foreign Kind
-data FK = FKRect | FKSize
+data FK = FKRect | FKSize | FKUnit | FKTuple FK FK
+        | (~>) FK FK | FKBool | FKInt
 
 data RACSignal :: FK -> * where
-  RACSigSize :: String -> RACSignal FKSize
+  RACSigSize      :: String -> RACSignal FKSize
   Rcl_frameSignal :: String -> RACSignal FKRect
-  RCLBox :: Double -> RACSignal FKRect
+  RCLBox          :: Double -> RACSignal FKRect
+  RACFunction     :: (RACSignal a -> RACSignal b) -> RACSignal (a ~> b)
+  RACBool         :: Bool -> RACSignal FKBool
+
+-- Well, you can define it ;P
+apply :: RACSignal (a ~> b) -> RACSignal a -> RACSignal b
+apply (RACFunction f) v = f v
 
 instance Show (RACSignal a) where
   show (RACSigSize x) = x
   show (Rcl_frameSignal x) = x <> ".rcl_frameSignal"
   show (RCLBox d) = "RCLBox(" <> show d <> ")"
+  show (RACFunction f) = "* Function *"
 
 data CGRect = CGRectZero | CGRectMake String deriving Show
 
