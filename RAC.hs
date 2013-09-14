@@ -9,7 +9,7 @@ import Data.Unique
 import Control.Applicative
 
 -- Foreign Kind
-data FK = FKRect | FKSize
+data FK = FKRect | FKSize | FKTuple FK FK
 
 data RACSignal :: FK -> * where
   RACSigSize      :: String -> RACSignal FKSize
