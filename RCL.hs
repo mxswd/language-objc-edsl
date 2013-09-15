@@ -38,7 +38,7 @@ data NSLayout = NSLayoutAttributeBottom
 instance ToExp NSLayout where
   toExp NSLayoutAttributeBottom _ = [cexp|NSLayoutAttributeBottom()|]
 
-data View = View Id RCLAlignment
+data View = View Exp RCLAlignment
 
 data RCLAlignment = RCLAlignment (M.Map RCLKeys Id)
 
@@ -51,11 +51,11 @@ instance ToExp RCLAlignment where
 mkPairs :: M.Map RCLKeys Id -> SrcLoc -> [(Exp, Exp)]
 mkPairs xs l = map (\(k, i) -> (Var (fromString (show k)) l, toExp i l)) $ M.toList xs
 
-mkRCL :: Id -> [(RCLKeys, Id)] -> View
+mkRCL :: Exp -> [(RCLKeys, Id)] -> View
 mkRCL s = View s . RCLAlignment . M.fromList
 
 -- | Typical pretty print.
-runRCL :: [Stm] -> String
+runRCL :: [BlockItem] -> String
 runRCL r = unlines $ map (prettyPragma 80) $ map ppr r
 
 runExpr :: RAC [View] -> [BlockItem]
@@ -65,7 +65,7 @@ mkStm :: View -> Stm
 mkStm v = Exp (Just (toExp v noLoc)) noLoc
 
 -- [self.window.contentView.rcl_frameSignal insetWidth:RCLBox(32.25) height:RCLBox(16.75) nullRect:CGRectZero];
-rcl_frameSignal :: Id -> RAC Id
+rcl_frameSignal :: Exp -> RAC Id
 rcl_frameSignal x = fresh $ Rcl_frameSignal x
 
 -- [x insetWidth:RCLBox(32.25) height:RCLBox(16.75) nullRect:CGRectZero]

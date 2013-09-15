@@ -17,17 +17,24 @@ data FK = FKRect | FKSize | FKTuple FK FK
 
 data RACSignal :: FK -> * where
   RACSigSize      :: Exp -> RACSignal FKSize
-  Rcl_frameSignal :: Id -> RACSignal FKRect
+  Rcl_frameSignal :: Exp -> RACSignal FKRect
   RCLBox          :: Double -> RACSignal FKRect
 
-rac_sigsize :: Id -> RACSignal FKSize
-rac_sigsize (Id x l) = RACSigSize $ Var (Id x l) l
+rac_sigsize :: Exp -> RACSignal FKSize
+rac_sigsize = RACSigSize
 
 instance ToExp Id where
   toExp (Id x l) = Var (Id x l)
 
 instance IsString Id where
   fromString x = Id x noLoc
+
+instance IsString Exp where
+  -- TODO: this is really limited
+  fromString x = case elemIndex '.' x of
+                  Nothing -> Var (Id x noLoc) noLoc
+                  Just i  -> let (s, _:c) = splitAt i x
+                             in Member (Var (Id s noLoc) noLoc) (Id c noLoc) noLoc
 
 instance ToExp (RACSignal a) where
   toExp (RACSigSize x) l = x
