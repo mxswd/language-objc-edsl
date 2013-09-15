@@ -1,10 +1,16 @@
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DataKinds, QuasiQuotes, TemplateHaskell #-}
 module RCL where
 
 import Data.List
 import qualified Data.Map as M
 import Data.Monoid
 import RAC
+import Language.C.Syntax
+import Language.C.Quote.ObjC
+import Data.Loc
+import Text.PrettyPrint.Mainland
+import Language.C.Pretty
+import Data.String
 
 data RCLKeys = Rcl_rect | Rcl_size | Rcl_origin | Rcl_center
              | Rcl_centerX | Rcl_centerY | Rcl_height | Rcl_width
@@ -27,35 +33,46 @@ instance Show RCLKeys where
   show Rcl_right = "rcl_right"
   show Rcl_left = "rcl_left"
   show Rcl_baseline = "rcl_baseline"
-  
-data NSLayout = NSLayoutAttributeBottom deriving Show
-data View = View String RCLAlignment
 
-data RCLAlignment = RCLAlignment (M.Map RCLKeys String)
+data NSLayout = NSLayoutAttributeBottom
+instance ToExp NSLayout where
+  toExp NSLayoutAttributeBottom _ = [cexp|NSLayoutAttributeBottom()|]
 
-instance Show View where
-  show (View n rcl) = "RCLAlignment(" <> n <> ") = " <> show rcl
-  showList x = flip (++) $ unlines (map show x)
+data View = View Id RCLAlignment
 
-showP (k, s) = show k <> ": " <> s
+data RCLAlignment = RCLAlignment (M.Map RCLKeys Id)
 
-instance Show RCLAlignment where
-  show (RCLAlignment xs) = "@{\n  " <> intercalate ",\n  " (map showP (M.toList xs)) <> "\n};"
+instance ToExp View where
+  toExp (View n rcl) _ = [cexp|RCLAlignment($n) = $rcl|]
 
-mkRCL :: String -> [(RCLKeys, String)] -> View
+instance ToExp RCLAlignment where
+  toExp (RCLAlignment xs) l = ObjCLitDict (mkPairs xs l) l
+
+mkPairs :: M.Map RCLKeys Id -> SrcLoc -> [(Exp, Exp)]
+mkPairs xs l = map (\(k, i) -> (Var (fromString (show k)) l, toExp i l)) $ M.toList xs
+
+mkRCL :: Id -> [(RCLKeys, Id)] -> View
 mkRCL s = View s . RCLAlignment . M.fromList
 
-runRCL :: RAC [View] -> String
-runRCL (RAC xs bs) = show bs <> "\n" <> show xs
+-- | Typical pretty print.
+runRCL :: [Stm] -> String
+runRCL r = unlines $ map (prettyPragma 80) $ map ppr r
+
+runExpr :: RAC [View] -> [BlockItem]
+runExpr (RAC xs bs) = map (mkBlock) bs <> map (BlockStm . mkStm) xs
+
+mkStm :: View -> Stm
+mkStm v = Exp (Just (toExp v noLoc)) noLoc
 
 -- [self.window.contentView.rcl_frameSignal insetWidth:RCLBox(32.25) height:RCLBox(16.75) nullRect:CGRectZero];
-rcl_frameSignal :: String -> RAC Var
+rcl_frameSignal :: Id -> RAC Id
 rcl_frameSignal x = fresh $ Rcl_frameSignal x
 
 -- [x insetWidth:RCLBox(32.25) height:RCLBox(16.75) nullRect:CGRectZero]
-insetWidthHeightNull :: RACSignal FKRect -> RACSignal FKRect -> CGRect -> Var -> RAC Var
-insetWidthHeightNull w h n s = fresh $ RACSigSize $ "[" <> s <> " insetWidth:" <> show w <> " height:" <> show h <> " nullRect:" <> show n <> "]"
+insetWidthHeightNull :: RACSignal FKRect -> RACSignal FKRect -> CGRect -> Id -> RAC Id
+insetWidthHeightNull w h n s = fresh $ RACSigSize $ [cexp|[$s insertWidth:$w height:$h nullRect:$n]|]
 
 -- [x divideWithAmount:RCLBox(20) padding:self.verticalPadding fromEdge:NSLayoutAttributeBottom];
-divideWithAmountPaddingEdge :: RACSignal FKRect -> RACSignal FKSize -> NSLayout -> Var -> RAC (Var, Var)
-divideWithAmountPaddingEdge d p e s = fresh2 $ RACSigSize $ "[" <> s <> " divideWithAmount:" <> show d <> " padding:" <> show p <> " fromEdge:" <> show e <> "]"
+divideWithAmountPaddingEdge :: RACSignal FKRect -> RACSignal FKSize -> NSLayout -> Id -> RAC (Id, Id)
+divideWithAmountPaddingEdge d p e s = fresh2 $ RACSigSize $ [cexp|[$s divideWithAmount:$d padding:$p fromEdge:$e]|]
+

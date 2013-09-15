@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, DataKinds, GADTs, KindSignatures, ExistentialQuantification #-}
+{-# LANGUAGE FlexibleInstances, DataKinds, GADTs, KindSignatures, ExistentialQuantification, QuasiQuotes, TemplateHaskell #-}
 module RAC where
 
 import Data.List
@@ -7,36 +7,45 @@ import Control.Monad.State
 import System.IO.Unsafe
 import Data.Unique
 import Control.Applicative
+import Language.C.Quote.ObjC
+import Language.C
+import Data.Loc
+import Data.String
 
 -- Foreign Kind
 data FK = FKRect | FKSize | FKTuple FK FK
 
 data RACSignal :: FK -> * where
-  RACSigSize      :: String -> RACSignal FKSize
-  Rcl_frameSignal :: String -> RACSignal FKRect
+  RACSigSize      :: Exp -> RACSignal FKSize
+  Rcl_frameSignal :: Id -> RACSignal FKRect
   RCLBox          :: Double -> RACSignal FKRect
 
-instance Show (RACSignal a) where
-  show (RACSigSize x) = x
-  show (Rcl_frameSignal x) = x <> ".rcl_frameSignal"
-  show (RCLBox d) = "RCLBox(" <> show d <> ")"
+rac_sigsize :: Id -> RACSignal FKSize
+rac_sigsize (Id x l) = RACSigSize $ Var (Id x l) l
 
-data CGRect = CGRectZero | CGRectMake String deriving Show
+instance ToExp Id where
+  toExp (Id x l) = Var (Id x l)
 
-type Var = String
-data Bind = forall a . Bind Var (RACSignal a)
-          | forall a . BindTuple Var Var (RACSignal a, RACSignal a)
+instance IsString Id where
+  fromString x = Id x noLoc
+
+instance ToExp (RACSignal a) where
+  toExp (RACSigSize x) l = x
+  toExp (Rcl_frameSignal x) _ = [cexp|[$x rcl_frameSignal]|]
+  toExp (RCLBox d) _ = [cexp|RCLBox($d)|]
+
+data CGRect = CGRectZero | CGRectMake String
+instance ToExp CGRect where
+  toExp CGRectZero _ = [cexp|CGRectZero()|]
+
+data Bind = forall a . Bind Id (RACSignal a)
+          | forall a . BindTuple Id Id (RACSignal a, RACSignal a)
 
 data RAC a = RAC a [Bind]
 
-instance Show Bind where
-  show (Bind s _) = "RACSignal *" <> s
-  show (BindTuple x y _) = "RACTupleUnpack(RACSignal *" <> x <> ", RACSignal *" <> y <>")"
-  showList x = flip (++) $ unlines (map showCode x)
-
-showCode :: Bind -> String
-showCode b@(Bind _ x) = show b <> " = " <> show x <> ";\n"
-showCode b@(BindTuple _ _ (x, _)) = show b <> " = " <> show x <> ";\n"
+mkBlock :: Bind -> BlockItem
+mkBlock (Bind s x) = [citem|typename RACSignal *$id:s = $x;|]
+mkBlock (BindTuple a b (x, _)) = BlockStm [cstm|RACTupleUnpack(RACSignal *$a, RACSignal *$b) = $x;|]
 
 instance Functor RAC where
   fmap = liftM
@@ -50,14 +59,11 @@ instance Monad RAC where
   (RAC x bs) >>= f = let (RAC v bs') = f x
                      in RAC v (bs ++ bs')
 
-class RACT a where
-  rep :: a -> Bind
-
-fresh :: RACSignal a -> RAC Var
+fresh :: RACSignal a -> RAC Id
 fresh x = let f = "f_" <> (show . hashUnique . unsafePerformIO $ newUnique)
-          in RAC f [Bind f x]
+          in RAC (Id f noLoc) [Bind (Id f noLoc) x]
 
-fresh2 :: RACSignal a -> RAC (Var, Var)
+fresh2 :: RACSignal a -> RAC (Id, Id)
 fresh2 x = let (f, g) = ("f_" <> (show . hashUnique . unsafePerformIO $ newUnique), "f_" <> (show . hashUnique . unsafePerformIO $ newUnique))
-           in RAC (f, g) [BindTuple f g (x, x)]
+           in RAC (Id f noLoc, Id g noLoc) [BindTuple (Id f noLoc) (Id g noLoc) (x, x)]
 
