@@ -2,9 +2,9 @@ HC      = ghc
 CFLAGS  = -fobjc-arc
 HCFLAGS = 
 LDFLAGS = -package template-haskell -package language-c-quote -package language-c-inline -package hint \
-          -framework Cocoa -optl-ObjC
+          -framework Cocoa -framework ReactiveCocoaLayout -framework ReactiveCocoa -framework Archimedes -optl-ObjC
 
-OBJS = Main.o App.o App_objc.o AppDelegate.o AppDelegate_objc.o Interpreter.o
+OBJS = Main.o App.o App_objc.o AppDelegate.o AppDelegate_objc.o Interpreter.o Layout.o RAC.o RCL.o AppWindow.o AppWindow_objc.o
 
 default: HSApp.app/Contents/MacOS/HSApp
 
@@ -12,9 +12,11 @@ default: HSApp.app/Contents/MacOS/HSApp
 	$(HC) -c $< $(HCFLAGS)
 
 Interpreter.o:
-AppDelegate.o: Interpreter.o 
+AppDelegate.o: Interpreter.o Layout.o
 App.o:
+AppDelegate.o: AppWindow.o
 Main.o: App.o AppDelegate.o
+Layout.o: RAC.o RCL.o
 
 App_objc.m: App.o
 AppDelegate_objc.m: AppDelegate.o
