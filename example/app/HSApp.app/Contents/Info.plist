@@ -9,7 +9,7 @@
 	<key>CFBundleExecutable</key>
 	<string>HSApp</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.justtesting.HSApp</string>
+	<string>com.maxpow4h.HSApp</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -27,7 +27,7 @@
 	<key>LSMinimumSystemVersion</key>
 	<string>10.8</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2013 Manuel M T Chakravarty. BSD3 licensed.</string>
+	<string>Copyright © 2013 Maxwell Swadling. BSD3 licensed.</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
