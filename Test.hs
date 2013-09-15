@@ -19,7 +19,7 @@ test1_m = runExpr $ do
 -- typename strikes again!
 
 test1_v = [ [citem|typename RACSignal * f_1 = [self.contentView rcl_frameSignal];|]
-          , [citem|typename RACSignal * f_2 = [f_1 insertWidth: RCLBox(32.25) height: RCLBox(16.75) nullRect: CGRectZero()];|]
+          , [citem|typename RACSignal * f_2 = [f_1 insetWidth: RCLBox(32.25) height: RCLBox(16.75) nullRect: CGRectZero()];|]
           , [citem|RACTupleUnpack(RACSignal * f_3, RACSignal * f_4) = [f_2 divideWithAmount: RCLBox(20.0) padding: self.verticalPadding fromEdge: NSLayoutAttributeBottom()];|]
           , [citem|RCLAlignment(self.scrollView) = @{rcl_rect : f_4};|]
           , [citem|RCLAlignment(self.textField) = @{rcl_rect : f_3};|]

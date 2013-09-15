@@ -36,7 +36,11 @@ instance Show RCLKeys where
 
 data NSLayout = NSLayoutAttributeBottom
 instance ToExp NSLayout where
-  toExp NSLayoutAttributeBottom _ = [cexp|NSLayoutAttributeBottom()|]
+  toExp NSLayoutAttributeBottom _ = [cexp|NSLayoutAttributeBottom|]
+
+data CGRect = CGRectZero | CGRectMake String
+instance ToExp CGRect where
+  toExp CGRectZero _ = [cexp|CGRectZero|]
 
 data View = View Exp RCLAlignment
 
@@ -70,7 +74,7 @@ rcl_frameSignal x = fresh $ Rcl_frameSignal x
 
 -- [x insetWidth:RCLBox(32.25) height:RCLBox(16.75) nullRect:CGRectZero]
 insetWidthHeightNull :: RACSignal FKRect -> RACSignal FKRect -> CGRect -> Id -> RAC Id
-insetWidthHeightNull w h n s = fresh $ RACSigSize $ [cexp|[$s insertWidth:$w height:$h nullRect:$n]|]
+insetWidthHeightNull w h n s = fresh $ RACSigSize $ [cexp|[$s insetWidth:$w height:$h nullRect:$n]|]
 
 -- [x divideWithAmount:RCLBox(20) padding:self.verticalPadding fromEdge:NSLayoutAttributeBottom];
 divideWithAmountPaddingEdge :: RACSignal FKRect -> RACSignal FKSize -> NSLayout -> Id -> RAC (Id, Id)

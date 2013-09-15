@@ -41,10 +41,6 @@ instance ToExp (RACSignal a) where
   toExp (Rcl_frameSignal x) _ = [cexp|[$x rcl_frameSignal]|]
   toExp (RCLBox d) _ = [cexp|RCLBox($d)|]
 
-data CGRect = CGRectZero | CGRectMake String
-instance ToExp CGRect where
-  toExp CGRectZero _ = [cexp|CGRectZero()|]
-
 data Bind = forall a . Bind Id (RACSignal a)
           | forall a . BindTuple Id Id (RACSignal a, RACSignal a)
 
