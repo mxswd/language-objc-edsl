@@ -30,5 +30,5 @@ HSApp.app/Contents/MacOS/HSApp: HSApp
 .PHONY: clean
 
 clean:
-	rm -f *.o *.hi App_objc.[hm] AppDelegate_objc.[hm] *_stub.h HSApp HSApp.app/Contents/MacOS/HSApp
+	rm -f *.o *.hi App_objc.[hm] AppDelegate_objc.[hm] AppWindow_objc.[hm] *_stub.h HSApp HSApp.app/Contents/MacOS/HSApp
 	
