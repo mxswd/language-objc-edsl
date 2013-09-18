@@ -64,27 +64,11 @@ objc_implementation ['evalExpr] [cunit|
 {
   [super windowDidLoad];
   
-  // from RCL's demos
-	self.scrollView = [[NSScrollView alloc] initWithFrame:NSZeroRect];
-	self.scrollView.wantsLayer = YES;
-
-	self.scrollView.autoresizingMask = NSViewMaxXMargin | NSViewMinYMargin;
-
-	[self.contentView addSubview:self.scrollView];
-
-	self.textField = [[NSTextField alloc] initWithFrame:NSZeroRect];
-	self.textField.wantsLayer = YES;
-	self.textField.stringValue = @"";
-	[self.textField sizeToFit];
-
-	self.textField.autoresizingMask = NSViewMaxXMargin | NSViewMinYMargin;
-
-	[self.contentView addSubview:self.textField];
-
-  self.textView = self.scrollView.documentView;
+  $stm:layout;
+  
+  self.textView = self.scrollView.documentView;  
   [self.textView becomeFirstResponder];
   
-  $stm:layout;
 }
 
 // TODO: hook this up
