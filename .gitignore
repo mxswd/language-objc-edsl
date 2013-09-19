@@ -5,3 +5,7 @@ cabal-dev
 *.chi
 *.chs.h
 .virthualenv
+example/app/*_objc.*
+example/app/*_stub.*
+example/app/HSApp.app/Contents/MacOS/HSApp
+example/app/HSApp
