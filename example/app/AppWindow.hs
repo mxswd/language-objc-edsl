@@ -43,6 +43,8 @@ objc_implementation ['evalExpr] [cunit|
 
 @property (strong) typename NSTextView *textView;
 
+$decl:props;
+
 @end
 
 

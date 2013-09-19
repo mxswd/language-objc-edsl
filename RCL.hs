@@ -11,6 +11,7 @@ import Data.Loc
 import Text.PrettyPrint.Mainland
 import Language.C.Pretty
 import Data.String
+import Data.Maybe
 
 data RCLKeys = Rcl_rect | Rcl_size | Rcl_origin | Rcl_center
              | Rcl_centerX | Rcl_centerY | Rcl_height | Rcl_width
@@ -62,8 +63,8 @@ mkRCL s = View s . RCLAlignment . M.fromList
 runRCL :: [BlockItem] -> String
 runRCL r = unlines $ map (prettyPragma 80) $ map ppr r
 
-runExpr :: RAC [View] -> [BlockItem]
-runExpr (RAC xs bs) = map (mkBlock) bs <> map (BlockStm . mkStm) xs
+runExpr :: RAC [View] -> ([BlockItem], [Definition])
+runExpr (RAC xs bs) = (map (mkBlock) bs <> map (BlockStm . mkStm) xs, catMaybes (map mkProperty bs))
 
 mkStm :: View -> Stm
 mkStm v = Exp (Just (toExp v noLoc)) noLoc

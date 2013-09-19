@@ -49,16 +49,26 @@ instance ToExp (RACSignal a) where
   toExp (RACTextField s) l = StmExpr (map BlockStm s) l
   toExp (RACScrollView s) l = StmExpr (map BlockStm s) l
 
-data Bind = forall a . Bind Id (RACSignal a)
-          | forall a . BindTuple Id Id (RACSignal a, RACSignal a)
-          | forall a . Bindless (RACSignal a)
+-- Binding
 
-data RAC a = RAC a [Bind]
+data Bind = forall a . Bind Id (RACSignal a) -- a reference
+          | forall a . BindTuple Id Id (RACSignal a, RACSignal a) -- a tuple
+          | forall a . Bindless (RACSignal a) -- no binding
+          | forall a . PropertyBind Definition (RACSignal a) -- binding an @property
 
 mkBlock :: Bind -> BlockItem
 mkBlock (Bind s x) = [citem|typename RACSignal *$id:s = $x;|]
 mkBlock (BindTuple a b (x, _)) = BlockStm [cstm|RACTupleUnpack(RACSignal *$a, RACSignal *$b) = $x;|]
 mkBlock (Bindless s) = [citem|$s;|]
+mkBlock (PropertyBind _ s) = [citem|$s;|]
+
+mkProperty :: Bind -> Maybe Definition
+mkProperty (PropertyBind s _) = Just s
+mkProperty _ = Nothing
+
+-- RAC monad
+
+data RAC a = RAC a [Bind]
 
 instance Functor RAC where
   fmap = liftM

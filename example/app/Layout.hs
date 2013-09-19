@@ -9,9 +9,11 @@ import Data.Loc
 layout :: Stm
 layout = flip Block noLoc layout'
 
-layout' = runExpr $ do
+(layout', (props:_)) = runExpr $ do
   textField <- newTextField "self.textField" "self.contentView"
   scrollView <- newScrollView "self.scrollView" "self.contentView"
+  
+  -- text_signal <- rcl_textvalue textField
     
   rect <- rcl_frameSignal "self.contentView" >>= insetWidthHeightNull (RCLBox 32.25) (RCLBox 16.75) (CGRectZero)
   (textRect, scrollRect) <- divideWithAmountPaddingEdge (RCLBox 20) (rac_sigsize "self.verticalPadding") (NSLayoutAttributeBottom) rect
