@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Layout where
 
 import RAC
@@ -6,10 +7,12 @@ import RCL
 import Language.C.Syntax
 import Data.Loc
 
+main = print props
+
 layout :: Stm
 layout = flip Block noLoc layout'
 
-(layout', (props:_)) = runExpr $ do
+(layout', props) = runExpr $ do
   textField <- newTextField "self.textField" "self.contentView"
   scrollView <- newScrollView "self.scrollView" "self.contentView"
   
