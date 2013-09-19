@@ -35,13 +35,14 @@ objc_implementation ['evalExpr] [cunit|
 
 @interface AppWindow ()
 
+// This must be the first @property. Must.
+$ifaces:props;
+
 @property (readonly) typename NSView   *contentView;
 @property (readonly) typename RACSignal  *verticalPadding;
 
-@property (strong) typename NSScrollView *scrollView;
-@property (strong) typename NSTextField  *textField;
-
 @property (strong) typename NSTextView *textView;
+
 
 @end
 

@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, QuasiQuotes, TemplateHaskell #-}
+{-# LANGUAGE DataKinds, QuasiQuotes, TemplateHaskell, OverloadedStrings #-}
 module RCL where
 
 import Data.List
@@ -11,6 +11,7 @@ import Data.Loc
 import Text.PrettyPrint.Mainland
 import Language.C.Pretty
 import Data.String
+import Data.Maybe
 
 data RCLKeys = Rcl_rect | Rcl_size | Rcl_origin | Rcl_center
              | Rcl_centerX | Rcl_centerY | Rcl_height | Rcl_width
@@ -62,8 +63,11 @@ mkRCL s = View s . RCLAlignment . M.fromList
 runRCL :: [BlockItem] -> String
 runRCL r = unlines $ map (prettyPragma 80) $ map ppr r
 
-runExpr :: RAC [View] -> [BlockItem]
-runExpr (RAC xs bs) = map (mkBlock) bs <> map (BlockStm . mkStm) xs
+runExpr :: RAC [View] -> ([BlockItem], [ObjCIfaceDecl])
+runExpr (RAC xs bs) = let
+      xs' = map (mkBlock) bs <> map (BlockStm . mkStm) xs
+      ds' = catMaybes (map mkProperty bs)
+    in (xs', ds')
 
 mkStm :: View -> Stm
 mkStm v = Exp (Just (toExp v noLoc)) noLoc
@@ -80,8 +84,10 @@ rcl_frameSignal x = fresh $ Rcl_frameSignal x
 -- | var to bind to, var to `addSubview` to
 -- the return value is for convenience, it is left to the reader why.
 newScrollView :: Id -> Exp -> RAC Exp
-newScrollView s v = RAC (Var s noLoc) [Bindless sig]
-    where sig = RACScrollView
+newScrollView s v = RAC (Var s noLoc) [PropertyBind prop sig]
+    where 
+      prop = mkProp "NSScrollView" s
+      sig = RACScrollView
               ( [cstm|$s = [[NSScrollView alloc] initWithFrame:NSZeroRect];|]
               : [cstm|$s.wantsLayer = YES;|]
               : [cstm|$s.autoresizingMask = NSViewMaxXMargin | NSViewMinYMargin;|]
@@ -96,8 +102,12 @@ newScrollView s v = RAC (Var s noLoc) [Bindless sig]
 -- self.textField.autoresizingMask = NSViewMaxXMargin | NSViewMinYMargin;
 -- [self.contentView addSubview:self.textField];
 newTextField :: Id -> Exp -> RAC Exp
-newTextField s v = RAC (Var s noLoc) [Bindless sig]
-     where sig = RACTextField
+newTextField s v = RAC (Var s noLoc) [PropertyBind prop sig]
+     where
+       prop = mkProp "NSTextField" s
+              -- when https://github.com/mainland/language-c-quote/issues/26 is fixed?
+              -- [ciface|@property (strong) typename NSTextField *$sdecl:q;|]
+       sig = RACTextField
                ( [cstm|$s = [[NSTextField alloc] initWithFrame:NSZeroRect];|]
                : [cstm|$s.wantsLayer = YES;|]
                : [cstm|$s.stringValue = @"";|]
@@ -106,7 +116,14 @@ newTextField s v = RAC (Var s noLoc) [Bindless sig]
                : [cstm|[$v addSubview:$s];|]
                : []
                )
-                 
+
+-- make objective c property
+mkProp t (Id s' _) = ObjCIfaceProp [ObjCStrong noLoc]
+              (FieldGroup (DeclSpec [] []
+              (Tnamed t [] noLoc) noLoc) [q] noLoc) noLoc
+    where
+      q = Field (Just (Id (snd (fromMethod s')) noLoc))
+                (Just (Ptr [] (DeclRoot noLoc) noLoc)) (Nothing) noLoc
 
 -- [x insetWidth:RCLBox(32.25) height:RCLBox(16.75) nullRect:CGRectZero]
 insetWidthHeightNull :: RACSignal FKRect -> RACSignal FKRect -> CGRect -> Id -> RAC Id

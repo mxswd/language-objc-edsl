@@ -12,14 +12,15 @@ default: HSApp.app/Contents/MacOS/HSApp
 	$(HC) -c $< $(HCFLAGS)
 
 Interpreter.o:
-AppDelegate.o: Interpreter.o Layout.o
+AppDelegate.o: Interpreter.o AppWindow.o
 App.o:
-AppDelegate.o: AppWindow.o
+AppWindow.o: Layout.o
 Main.o: App.o AppDelegate.o
 Layout.o: RAC.o RCL.o
 
 App_objc.m: App.o
 AppDelegate_objc.m: AppDelegate.o
+AppWindow_objc.m: AppDelegate.o
 
 HSApp: $(OBJS)
 	$(HC) -o $@ $^ $(LDFLAGS)

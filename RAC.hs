@@ -36,10 +36,13 @@ instance IsString Id where
 
 instance IsString Exp where
   -- TODO: this is really limited
-  fromString x = case elemIndex '.' x of
-                  Nothing -> Var (Id x noLoc) noLoc
-                  Just i  -> let (s, _:c) = splitAt i x
-                             in Member (Var (Id s noLoc) noLoc) (Id c noLoc) noLoc
+  fromString x = case fromMethod x of
+                  ([], x') -> Var (Id x' noLoc) noLoc
+                  (s, c) -> Member (Var (Id s noLoc) noLoc) (Id c noLoc) noLoc
+
+fromMethod x = case elemIndex '.' x of
+                  Nothing -> ([], x)
+                  Just i  -> let (s, _:c) = splitAt i x in (s, c)
 
 instance ToExp (RACSignal a) where
   -- TODO: line numbers?
@@ -49,16 +52,26 @@ instance ToExp (RACSignal a) where
   toExp (RACTextField s) l = StmExpr (map BlockStm s) l
   toExp (RACScrollView s) l = StmExpr (map BlockStm s) l
 
-data Bind = forall a . Bind Id (RACSignal a)
-          | forall a . BindTuple Id Id (RACSignal a, RACSignal a)
-          | forall a . Bindless (RACSignal a)
+-- Binding
 
-data RAC a = RAC a [Bind]
+data Bind = forall a . Bind Id (RACSignal a) -- a reference
+          | forall a . BindTuple Id Id (RACSignal a, RACSignal a) -- a tuple
+          | forall a . Bindless (RACSignal a) -- no binding
+          | forall a . PropertyBind ObjCIfaceDecl (RACSignal a) -- binding an @property
 
 mkBlock :: Bind -> BlockItem
 mkBlock (Bind s x) = [citem|typename RACSignal *$id:s = $x;|]
 mkBlock (BindTuple a b (x, _)) = BlockStm [cstm|RACTupleUnpack(RACSignal *$a, RACSignal *$b) = $x;|]
 mkBlock (Bindless s) = [citem|$s;|]
+mkBlock (PropertyBind _ s) = [citem|$s;|]
+
+mkProperty :: Bind -> Maybe ObjCIfaceDecl
+mkProperty (PropertyBind s _) = Just s
+mkProperty _ = Nothing
+
+-- RAC monad
+
+data RAC a = RAC a [Bind]
 
 instance Functor RAC where
   fmap = liftM
