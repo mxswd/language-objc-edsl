@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, QuasiQuotes, TemplateHaskell, OverloadedStrings #-}
+{-# LANGUAGE DataKinds, QuasiQuotes, TemplateHaskell, OverloadedStrings, GADTs #-}
 module RCL where
 
 import Data.List
@@ -45,7 +45,7 @@ instance ToExp CGRect where
 
 data View = View Exp RCLAlignment
 
-data RCLAlignment = RCLAlignment (M.Map RCLKeys Id)
+data RCLAlignment = RCLAlignment (M.Map RCLKeys (RACSignal FKSize))
 
 instance ToExp View where
   toExp (View n rcl) _ = [cexp|RCLAlignment($n) = $rcl|]
@@ -53,10 +53,10 @@ instance ToExp View where
 instance ToExp RCLAlignment where
   toExp (RCLAlignment xs) l = ObjCLitDict (mkPairs xs l) l
 
-mkPairs :: M.Map RCLKeys Id -> SrcLoc -> [(Exp, Exp)]
+mkPairs :: M.Map RCLKeys (RACSignal FKSize) -> SrcLoc -> [(Exp, Exp)]
 mkPairs xs l = map (\(k, i) -> (Var (fromString (show k)) l, toExp i l)) $ M.toList xs
 
-mkRCL :: Exp -> [(RCLKeys, Id)] -> View
+mkRCL :: Exp -> [(RCLKeys, RACSignal FKSize)] -> View
 mkRCL s = View s . RCLAlignment . M.fromList
 
 -- | Typical pretty print.
@@ -73,8 +73,27 @@ mkStm :: View -> Stm
 mkStm v = Exp (Just (toExp v noLoc)) noLoc
 
 -- [self.window.contentView.rcl_frameSignal insetWidth:RCLBox(32.25) height:RCLBox(16.75) nullRect:CGRectZero];
-rcl_frameSignal :: Exp -> RAC Id
+rcl_frameSignal :: Exp -> RAC (RACSignal FKRect)
 rcl_frameSignal x = fresh $ Rcl_frameSignal x
+
+rac_textSignal :: Exp -> RAC (RACSignal FKString)
+rac_textSignal x = freshB (Rac_textSignal x)
+
+rcl_alphaSignal :: Exp -> RACSignal FKDouble -> RAC ()
+rcl_alphaSignal x y = RAC () [Bindless b]
+  where
+    b = RACBind [cexp|RAC($x, rcl_alphaValue) = $y|]
+
+toDouble :: RACSignal FKBool -> RACSignal FKDouble
+toDouble (RACBool True) = RACDouble 1
+toDouble (RACBool False) = RACDouble 0
+toDouble (RACObserve x) = toDouble x
+toDouble (RACBind x) = RACBind x
+
+animate :: RACSignal FKDouble -> RAC (RACSignal FKDouble)
+animate x = RAC x [Bindless b]
+  where
+    b = RACBind [cexp|[$x animate]|]
 
 -- Skeleton generator
 -- self.scrollView = [[NSScrollView alloc] initWithFrame:NSZeroRect];
@@ -85,15 +104,15 @@ rcl_frameSignal x = fresh $ Rcl_frameSignal x
 -- the return value is for convenience, it is left to the reader why.
 newScrollView :: Id -> Exp -> RAC Exp
 newScrollView s v = RAC (Var s noLoc) [PropertyBind prop sig]
-    where 
-      prop = mkProp "NSScrollView" s
-      sig = RACScrollView
-              ( [cstm|$s = [[NSScrollView alloc] initWithFrame:NSZeroRect];|]
-              : [cstm|$s.wantsLayer = YES;|]
-              : [cstm|$s.autoresizingMask = NSViewMaxXMargin | NSViewMinYMargin;|]
-              : [cstm|[$v addSubview:$s];|]
-              : []
-              )
+  where 
+    prop = mkProp "NSScrollView" s
+    sig = RACScrollView
+            ( [cstm|$s = [[NSScrollView alloc] initWithFrame:NSZeroRect];|]
+            : [cstm|$s.wantsLayer = YES;|]
+            : [cstm|$s.autoresizingMask = NSViewMaxXMargin | NSViewMinYMargin;|]
+            : [cstm|[$v addSubview:$s];|]
+            : []
+            )
 
 -- self.textField = [[NSTextField alloc] initWithFrame:NSZeroRect];
 -- self.textField.wantsLayer = YES;
@@ -126,10 +145,10 @@ mkProp t (Id s' _) = ObjCIfaceProp [ObjCStrong noLoc]
                 (Just (Ptr [] (DeclRoot noLoc) noLoc)) (Nothing) noLoc
 
 -- [x insetWidth:RCLBox(32.25) height:RCLBox(16.75) nullRect:CGRectZero]
-insetWidthHeightNull :: RACSignal FKRect -> RACSignal FKRect -> CGRect -> Id -> RAC Id
+insetWidthHeightNull :: RACSignal FKRect -> RACSignal FKRect -> CGRect -> RACSignal FKRect -> RAC (RACSignal FKSize)
 insetWidthHeightNull w h n s = fresh $ RACSigSize $ [cexp|[$s insetWidth:$w height:$h nullRect:$n]|]
 
 -- [x divideWithAmount:RCLBox(20) padding:self.verticalPadding fromEdge:NSLayoutAttributeBottom];
-divideWithAmountPaddingEdge :: RACSignal FKRect -> RACSignal FKSize -> NSLayout -> Id -> RAC (Id, Id)
+divideWithAmountPaddingEdge :: RACSignal FKRect -> RACSignal FKSize -> NSLayout -> RACSignal FKSize -> RAC (RACSignal FKSize, RACSignal FKSize)
 divideWithAmountPaddingEdge d p e s = fresh2 $ RACSigSize $ [cexp|[$s divideWithAmount:$d padding:$p fromEdge:$e]|]
 

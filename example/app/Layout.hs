@@ -7,8 +7,6 @@ import RCL
 import Language.C.Syntax
 import Data.Loc
 
-main = print props
-
 layout :: Stm
 layout = flip Block noLoc layout'
 
