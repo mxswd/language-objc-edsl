@@ -14,6 +14,7 @@ import Data.List
 import Data.Monoid
 import Control.Monad.State
 import Control.Applicative
+import Language.C (Exp) -- for FFunction to contain a Exp
 
 -- Semantics container
 data OM a = OM a (TypeList Local) (TypeList Global)
@@ -27,6 +28,9 @@ runOM (OM _ ls gs) f g = let
 -- kind
 -- TODO: open type family? so importers can add types?
 data Ty = NSBool | NSInteger | NSString | NSArray Ty
+        -- gui
+        | NSTextField
+        -- Types
         | (~>) Ty Ty
         | NSUnit -- "void"
 
@@ -35,6 +39,16 @@ data TypeListType = Local | Global
 
 -- kind
 data TBool = TTrue | TFalse
+
+-- Ty constructors
+-- TODO: open data family? so importers can add types?
+data Func (a :: Ty) where
+  FBool :: Bool -> Func NSBool
+  FInt :: Int -> Func NSInteger
+  FArray :: Func (NSArray a)
+  FFunction :: Exp -> Func (a ~> b)
+  FUnit :: Func NSUnit
+  FTextField :: Func NSTextField
 
 -- A list for bindings
 data family TypeList :: TypeListType -> *
@@ -50,15 +64,7 @@ data instance TypeList Global
 -- If you can not (TFalse), then it is local and NSUnit (void).
 data Bind :: TypeListType -> TBool -> Ty -> * where
   Bind :: String -> Func a -> Bind t TTrue a -- bound var
-  NoBind :: Func a -> Bind Local TFalse NSUnit -- no bound var
-
--- Ty constructors
--- TODO: open data family? so importers can add types?
-data Func (a :: Ty) where
-  FBool :: Bool -> Func NSBool
-  FInt :: Int -> Func NSInteger
-  FFunction :: String -> Func (a ~> b)
-  FUnit :: Func NSUnit
+  NoBind :: Func (a ~> b) -> Bind Local TFalse NSUnit -- no bound var, must be "function"
 
 -- Monad
 instance Functor OM where
