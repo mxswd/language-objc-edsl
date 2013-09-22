@@ -1,6 +1,14 @@
 {-# LANGUAGE DataKinds, GADTs, KindSignatures, ExistentialQuantification, TypeOperators, RankNTypes, TypeFamilies #-}
 -- Objective-C Monad
-module OM where
+module OM -- monad
+          ( OM, mkOM, addOM, runOM
+          -- type class TypeLC
+          , TypeList, TypeLC, typeListMap
+          -- kinds
+          , TypeListType(..), TBool(..), Ty(..)
+          -- types
+          , Func(..), Bind(..)
+          ) where
 
 import Data.List
 import Data.Monoid
@@ -10,36 +18,47 @@ import Control.Applicative
 -- Semantics container
 data OM a = OM a (TypeList Local) (TypeList Global)
 
+runOM :: OM t -> (TypeList Local -> t1) -> (TypeList Global -> t2) -> (t1, t2)
+runOM (OM _ ls gs) f g = let
+  ls' = f ls
+  gs' = g gs
+  in (ls', gs')
+
 -- kind
+-- TODO: open type family? so importers can add types?
 data Ty = NSBool | NSInteger | NSString | NSArray Ty
         | (~>) Ty Ty
+        | NSUnit -- "void"
 
 -- kind
 data TypeListType = Local | Global
 
--- data TypeList (t :: TypeListType) = TypeListNil
---               | forall (a :: Ty) . TypeListCons (Bind a) (TypeList t)
+-- kind
+data TBool = TTrue | TFalse
+
+-- A list for bindings
 data family TypeList :: TypeListType -> *
 data instance TypeList Local
   = TypeListNilL
-  | forall (a :: Ty) . TypeListConsL (Bind Local a) (TypeList Local)
+  | forall (a :: Ty) (n :: TBool) . TypeListConsL (Bind Local n a) (TypeList Local)
 data instance TypeList Global
   = TypeListNilG
-  | forall (a :: Ty) . TypeListConsG (Bind Global a) (TypeList Global)
+  | forall (a :: Ty) . TypeListConsG (Bind Global TTrue a) (TypeList Global)
 
 -- Binding
-data family Bind :: TypeListType -> Ty -> *
-data instance Bind Local a where
-  Bind :: String -> Func a -> Bind Local a -- bound var
-  NoBind :: Func a -> Bind Local a -- no bound var
-data instance Bind Global a where
-  GBind :: String -> Func a -> Bind Global a -- global / class property var
+-- If you can bind it (TTrue), then it can be any a.
+-- If you can not (TFalse), then it is local and NSUnit (void).
+data Bind :: TypeListType -> TBool -> Ty -> * where
+  Bind :: String -> Func a -> Bind t TTrue a -- bound var
+  NoBind :: Func a -> Bind Local TFalse NSUnit -- no bound var
 
 -- Ty constructors
+-- TODO: open data family? so importers can add types?
 data Func (a :: Ty) where
   FBool :: Bool -> Func NSBool
   FInt :: Int -> Func NSInteger
   FFunction :: String -> Func (a ~> b)
+  FUnit :: Func NSUnit
 
 -- Monad
 instance Functor OM where
@@ -54,29 +73,32 @@ instance Monad OM where
   (OM x ls gs) >>= f = let (OM x' ls' gs') = f x
                        in OM x' (typeListAppend ls ls') (typeListAppend gs gs')
 
+-- Locally add a NoBind
+addOM :: forall (a :: Ty) . (Bind Local TFalse a) -> OM ()
+addOM f = OM () (TypeListConsL f typeListNil) typeListNil
+
 -- type list type class
 class TypeLC (t :: TypeListType) where
   typeListNil :: TypeList t
-  typeListCons :: forall (a :: Ty) . (Bind t a) -> TypeList t -> TypeList t
   typeListAppend :: TypeList t -> TypeList t -> TypeList t
-  typeListMap :: (forall (a :: Ty) . Bind t a -> b) -> TypeList t -> [b]
-  nameOf :: Bind t a -> String
+  typeListMap :: (forall (a :: Ty) (n :: TBool) . Bind t n a -> b) -> TypeList t -> [b]
+  nameOf :: Bind t TTrue a -> String
+  mkOM :: forall (a :: Ty) . (Bind t TTrue a) -> OM (Bind t TTrue a)
 
 instance TypeLC Local where
   typeListNil = TypeListNilL
-  typeListCons = TypeListConsL
   typeListAppend TypeListNilL xs = xs
   typeListAppend (TypeListConsL v xs) ys = TypeListConsL v (typeListAppend xs ys)
   typeListMap _ TypeListNilL = []
   typeListMap f (TypeListConsL x xs) = (f x) : (typeListMap f xs)
   nameOf (Bind x _) = x
-  nameOf (NoBind _) = error "taking name of unnamed binding"
+  mkOM f = OM f (TypeListConsL f typeListNil) typeListNil
 
 instance TypeLC Global where
   typeListNil = TypeListNilG
-  typeListCons = TypeListConsG
   typeListAppend TypeListNilG xs = xs
   typeListAppend (TypeListConsG v xs) ys = TypeListConsG v (typeListAppend xs ys)
   typeListMap _ TypeListNilG = []
   typeListMap f (TypeListConsG x xs) = (f x) : (typeListMap f xs)
-  nameOf (GBind x _) = x
+  nameOf (Bind x _) = x
+  mkOM f = OM f typeListNil (TypeListConsG f typeListNil)
