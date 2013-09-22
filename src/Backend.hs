@@ -18,7 +18,8 @@ pr = do
   insertNum x xs
   -- newBool >>= flip insertBool xs
   p_xs <- newArrayProp
-  printNum x
+  h <- arrayHead p_xs
+  printNum h
 
 newInteger :: Int -> OM (Bind Local TTrue NSInteger)
 newInteger x = mkOM $ Bind "wat" (FInt x)
@@ -33,14 +34,21 @@ insertNum (Bind x _) (Bind xs _) = addOM (NoBind (
 newArrayProp :: OM (Bind Global TTrue (NSArray t))
 newArrayProp = do
   let n = "wow"
-  addOM (NoBind (FFunction [cexp|$id:n = [[NSArray alloc] init]|]))
-  mkOM $ Bind n FArray
+  addOM (NoBind (FFunction [cexp|$id:n = [[NSArray alloc] init]|])) -- global
+  mkOM $ Bind n FArray -- local
+
+arrayHead :: Bind t1 TTrue (NSArray t) -> OM (Bind Local TTrue t)
+arrayHead (Bind xs _) = let n = "nam"
+  in mkOM (Bind n (FFunctionE [cexp|[$id:xs firstObject]|]))
 
 newTextField :: OM (Bind Global TTrue (NSTextField))
 newTextField = undefined
 
 printNum :: TypeLC t => Bind t TTrue NSInteger -> OM ()
-printNum (Bind s _) = addOM (NoBind (FFunction [cexp|NSLog()|]))
+printNum (Bind s _) = addOM (NoBind (FFunction [cexp|NSLog("%d", $id:s)|]))
+
+printString :: TypeLC t => Bind t TTrue NSString -> OM ()
+printString (Bind s _) = addOM (NoBind (FFunction [cexp|NSLog("%s", $id:s)|]))
 
 test = runOM pr f' g'
 test' = do
@@ -59,6 +67,7 @@ mkBlocks (Bind x (FArray)) = [
     [citem|typename NSArray *$id:x = [[NSArray alloc] init];|]
     ]
 mkBlocks (Bind x (FFunction s)) = [[citem|$id:x = $s;|]]
+mkBlocks (Bind x (FFunctionE s)) = [[citem|$id:x = $s;|]]
 mkBlocks (NoBind (FFunction s)) = [BlockStm (Exp (Just s) noLoc)]
 
 -- makes property decls (global bindings)

@@ -47,6 +47,7 @@ data Func (a :: Ty) where
   FInt :: Int -> Func NSInteger
   FArray :: Func (NSArray a)
   FFunction :: Exp -> Func (a ~> b)
+  FFunctionE :: Exp -> Func (a)
   FUnit :: Func NSUnit
   FTextField :: Func NSTextField
 
