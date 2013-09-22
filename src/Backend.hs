@@ -15,11 +15,12 @@ pr :: OM ()
 pr = do
   x <- newInteger 4
   xs <- newArray
-  insertNum x xs
+  insertObject x xs
   -- newBool >>= flip insertBool xs
   p_xs <- newArrayProp
-  h <- arrayHead p_xs
+  h <- arrayHead xs
   printNum h
+  -- printString h -- This is a type error!
 
 newInteger :: Int -> OM (Bind Local TTrue NSInteger)
 newInteger x = mkOM $ Bind "wat" (FInt x)
@@ -27,8 +28,8 @@ newInteger x = mkOM $ Bind "wat" (FInt x)
 newArray :: OM (Bind Local TTrue (NSArray t))
 newArray = mkOM $ Bind "wo" FArray
 
-insertNum :: Bind t1 TTrue NSInteger -> Bind t2 TTrue (NSArray t3) -> OM ()
-insertNum (Bind x _) (Bind xs _) = addOM (NoBind (
+insertObject :: Bind t1 TTrue t -> Bind t2 TTrue (NSArray t) -> OM ()
+insertObject (Bind x _) (Bind xs _) = addOM (NoBind (
   FFunction [cexp|[$id:xs addObject:$id:x]|]))
 
 newArrayProp :: OM (Bind Global TTrue (NSArray t))
