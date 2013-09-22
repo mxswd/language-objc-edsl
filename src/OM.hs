@@ -3,7 +3,7 @@
 module OM -- monad
           ( OM, mkOM, addOM, runOM
           -- type class TypeLC
-          , TypeList, TypeLC, typeListMap
+          , TypeList, TypeLC, typeListMap, nameOf
           -- kinds
           , TypeListType(..), TBool(..), Ty(..)
           -- types
@@ -14,7 +14,7 @@ import Data.List
 import Data.Monoid
 import Control.Monad.State
 import Control.Applicative
-import Language.C (Exp) -- for FFunction to contain a Exp
+import Language.C (Exp) -- for FFunction to contain an Exp
 
 -- Semantics container
 data OM a = OM a (TypeList Local) (TypeList Global)
@@ -46,10 +46,11 @@ data Func (a :: Ty) where
   FBool :: Bool -> Func NSBool
   FInt :: Int -> Func NSInteger
   FArray :: Func (NSArray a)
-  FFunction :: Exp -> Func (a ~> b)
-  FFunctionE :: Exp -> Func a -> Func a
   FUnit :: Func NSUnit
   FTextField :: Func NSTextField
+  -- Not sure about these types yet
+  FFunction :: Exp -> Func (a ~> b)
+  FFunctionE :: Exp -> Func a -> Func a
 
 -- A list for bindings
 data family TypeList :: TypeListType -> *
@@ -107,5 +108,5 @@ instance TypeLC Global where
   typeListAppend (TypeListConsG v xs) ys = TypeListConsG v (typeListAppend xs ys)
   typeListMap _ TypeListNilG = []
   typeListMap f (TypeListConsG x xs) = (f x) : (typeListMap f xs)
-  nameOf (Bind x _) = x
+  nameOf (Bind x _) = "self." ++ x
   mkOM f = OM f typeListNil (TypeListConsG f typeListNil)
