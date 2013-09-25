@@ -11,13 +11,41 @@ import OM
 
 import System.IO.Unsafe
 
--- newArrayProp :: OM (Bind Global TTrue (NSArray t))
--- newArrayProp = do
---   let n = "wow"
---   addOM (NoBind (FFunction [cexp|$id:n = [[NSArray alloc] init]|])) -- global
---   mkOM $ Bind n FArray -- local
+-- subclassing
+class View (a :: Ty) where
+instance View NSView
+instance View NSTextField
+instance View NSScrollView
 
-newTextField :: OM (Bind Global TTrue (NSTextField))
-newTextField = undefined
+-- "pure", but really a pre-req to the code generator
+contentView :: Bind Global TTrue NSView
+contentView = Bind "contentView" FNSView
 
-  -- printString h -- This is a type error!
+newTextField :: OM (Bind Global TTrue NSTextField)
+newTextField = do
+  let n' = unsafePerformIO fresh
+      n = Bind n' FTextField :: Bind Global TTrue NSTextField
+      sig = [citem| {
+              $id:n = [[NSTextField alloc] initWithFrame:NSZeroRect];
+              $id:n.wantsLayer = YES;
+              $id:n.stringValue = @"";
+              [$id:n sizeToFit];
+              $id:n.autoresizingMask = NSViewMaxXMargin | NSViewMinYMargin;
+              [$id:(contentView) addSubview:$id:n];
+            }|]
+  addOM (NoBind (FBlockItem sig))
+  mkOM n
+
+newScrollView :: OM (Bind Global TTrue NSScrollView)
+newScrollView = do
+  let n' = unsafePerformIO fresh
+      -- you must qualify the scope before it is given to language-c-quote toIdent
+      n = Bind n' FScrollView :: Bind Global TTrue NSScrollView
+      sig = [citem| {
+              $id:n = [[NSScrollView alloc] initWithFrame:NSZeroRect];
+              $id:n.wantsLayer = YES;
+              $id:n.autoresizingMask = NSViewMaxXMargin | NSViewMinYMargin;
+              [$id:(contentView) addSubview:$id:n];
+            }|]
+  addOM (NoBind (FBlockItem sig))
+  mkOM n

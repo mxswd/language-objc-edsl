@@ -14,7 +14,7 @@ import Data.List
 import Data.Monoid
 import Control.Monad.State
 import Control.Applicative
-import Language.C (Exp) -- for FFunction to contain an Exp
+import Language.C (Exp, BlockItem) -- for FFunction to contain an Exp
 
 -- Semantics container
 data OM a = OM a (TypeList Local) (TypeList Global)
@@ -27,12 +27,21 @@ runOM (OM _ ls gs) f g = let
 
 -- kind
 -- TODO: open type family? so importers can add types?
-data Ty = NSBool | NSInteger | NSString | NSArray Ty
-        -- gui
-        | NSTextField
+data Ty = NSBool | NSInteger | NSDouble | NSString | NSArray Ty
         -- Types
         | (~>) Ty Ty
         | NSUnit -- "void"
+        -- UIKit
+        | NSView
+        | NSTextField
+        | NSScrollView
+        -- CG
+        | CGAlpha
+        | CGSize
+        | CGRect
+        -- RAC
+        | RACSignal Ty
+        | RACTuple Ty Ty
 
 -- kind
 data TypeListType = Local | Global
@@ -44,13 +53,34 @@ data TBool = TTrue | TFalse
 -- TODO: open data family? so importers can add types?
 data Func (a :: Ty) where
   FBool :: Bool -> Func NSBool
-  FInt :: Int -> Func NSInteger
+  FInteger :: Int -> Func NSInteger
+  FDouble :: Double -> Func NSDouble
+  FString :: String -> Func NSString
   FArray :: Func (NSArray a)
   FUnit :: Func NSUnit
-  FTextField :: Func NSTextField
+
   -- Not sure about these types yet
   FFunction :: Exp -> Func (a ~> b)
+  FBlockItem :: BlockItem -> Func a -- some side effecting code
   FFunctionE :: Exp -> Func a -> Func a
+  FFunctionT :: Exp -> Func (RACTuple (RACSignal a) (RACSignal b)) -> Func (RACTuple (RACSignal a) (RACSignal b))
+  -- CG
+  FCGAlpha :: Double -> Func NSDouble
+  FCGSize :: (Int, Int) -> Func CGSize
+  FCGRect :: (Int, Int, Int, Int) -> Func CGRect
+  CGRectZero :: Func CGRect
+  
+  -- UIKit
+  FTextField :: Func NSTextField
+  FScrollView :: Func NSScrollView
+  FNSView :: Func NSView
+  -- RAC
+  FRACSignal :: Func (RACSignal a)
+  FRACTuple :: Func a -> Func b -> Func (RACTuple a b)
+  
+  -- RCL
+  RCLBox :: Double -> Func (RACSignal CGRect)
+  
 
 -- A list for bindings
 data family TypeList :: TypeListType -> *
@@ -66,6 +96,7 @@ data instance TypeList Global
 -- If you can not (TFalse), then it is local and NSUnit (void).
 data Bind :: TypeListType -> TBool -> Ty -> * where
   Bind :: String -> Func a -> Bind t TTrue a -- bound var
+  BindTuple :: String -> String -> Func (RACTuple a b) -> Bind t TTrue (RACTuple a b) -- bound var
   NoBind :: Func (a ~> b) -> Bind Local TFalse NSUnit -- no bound var, must be "function"
 
 -- Monad

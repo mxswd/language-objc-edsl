@@ -24,7 +24,14 @@ newProp = do
   mkOM $ Bind n dty -- global
 
 newInteger :: Int -> OM (Bind Local TTrue NSInteger)
-newInteger x = mkOM $ Bind (unsafePerformIO fresh) (FInt x)
+newInteger x = mkOM $ Bind (unsafePerformIO fresh) (FInteger x)
 
 printDescription :: TypeLC t => Bind t TTrue d -> OM ()
 printDescription s = addOM (NoBind (FFunction [cexp|NSLog("%@", $id:s)|]))
+
+-- these are valid expressions (no OM required / pure)
+instance ToExp (Func CGRect) where
+  toExp CGRectZero _ = [cexp|CGRectZero|]
+
+instance ToExp (Func (RACSignal CGRect)) where
+  toExp (RCLBox d) _ = [cexp|RCLBox($d)|]

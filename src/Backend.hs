@@ -24,7 +24,7 @@ instance DefTypes (NSArray t) where
   defaultType = (FArray, [cexp|[[NSArray alloc] init]|])
 
 instance DefTypes NSInteger where
-  defaultType = (FInt 0, undefined)
+  defaultType = (FInteger 0, undefined)
 
 -- idents
 instance TypeLC t => ToIdent (Bind t TTrue t1) where
@@ -43,21 +43,27 @@ codeGen pr = let
 mkBlocks :: Bind Local n a -> [BlockItem]
 mkBlocks (Bind x (FBool True)) = [[citem|typename NSNumber *$id:x = @(YES);|]]
 mkBlocks (Bind x (FBool False)) = [[citem|typename NSNumber *$id:x = @(NO);|]]
-mkBlocks (Bind x (FInt b)) = [[citem|typename NSNumber *$id:x = @($b);|]]
+mkBlocks (Bind x (FInteger b)) = [[citem|typename NSNumber *$id:x = @($b);|]]
 mkBlocks (Bind x (FArray)) = [[citem|typename NSArray *$id:x = [[NSArray alloc] init];|]]
 mkBlocks (Bind x (FFunction s)) = [[citem|$id:x = $s;|]]
 mkBlocks (Bind x (FFunctionE s ty)) = let typ = typename ty
   in [[citem|typename $id:typ $id:x = $s;|]]
+mkBlocks (BindTuple x1 x2 (FFunctionT s t)) = [[citem|RACTupleUnpack(RACSignal *$id:x1 , RACSignal *$id:x2) = $s;|]]
 mkBlocks (NoBind (FFunction s)) = [BlockStm (Exp (Just s) noLoc)]
+mkBlocks (NoBind (FBlockItem s)) = [s]
 
 typename :: Func a -> String
 typename (FBool _) = "NSNumber *"
 typename (FArray) = "NSArray *"
-typename (FInt _) = "NSNumber *"
+typename (FInteger _) = "NSNumber *"
+typename (FRACSignal) = "RACSignal *"
 
 -- makes property decls (global bindings)
 mkProps :: Bind Global n a -> [ObjCIfaceDecl]
 mkProps (Bind x (FArray)) = [mkProp "NSArray" x]
+mkProps (Bind x (FTextField)) = [mkProp "NSTextField" x]
+mkProps (Bind x (FScrollView)) = [mkProp "NSScrollView" x]
+mkProps (Bind x (FNSView)) = [mkProp "NSView" x]
 
 -- Take a type to make, and an identifier for it.
 mkProp :: Id -> String -> ObjCIfaceDecl
