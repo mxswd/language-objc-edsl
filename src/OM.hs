@@ -76,7 +76,7 @@ data Func (a :: Ty) where
   FNSView :: Func NSView
   -- RAC
   FRACSignal :: Func (RACSignal a)
-  FRACTuple :: Func a -> Func b -> Func (RACTuple a b)
+  FRACTuple :: Func (RACSignal a) -> Func (RACSignal b) -> Func (RACTuple (RACSignal a) (RACSignal b))
   
   -- RCL
   RCLBox :: Double -> Func (RACSignal CGRect)
