@@ -63,7 +63,7 @@ data Func (a :: Ty) where
   FFunction :: Exp -> Func (a ~> b)
   FBlockItem :: BlockItem -> Func a -- some side effecting code
   FFunctionE :: Exp -> Func a -> Func a
-  FFunctionT :: Exp -> Func (RACTuple (RACSignal a) (RACSignal b)) -> Func (RACTuple (RACSignal a) (RACSignal b))
+
   -- CG
   FCGAlpha :: Double -> Func NSDouble
   FCGSize :: (Int, Int) -> Func CGSize
@@ -77,6 +77,7 @@ data Func (a :: Ty) where
   -- RAC
   FRACSignal :: Func (RACSignal a)
   FRACTuple :: Func (RACSignal a) -> Func (RACSignal b) -> Func (RACTuple (RACSignal a) (RACSignal b))
+  FFunctionT :: Exp -> Func (RACTuple (RACSignal a) (RACSignal b)) -> Func (RACTuple (RACSignal a) (RACSignal b)) -- rac tuple return type
   
   -- RCL
   RCLBox :: Double -> Func (RACSignal CGRect)
@@ -96,7 +97,7 @@ data instance TypeList Global
 -- If you can not (TFalse), then it is local and NSUnit (void).
 data Bind :: TypeListType -> TBool -> Ty -> * where
   Bind :: String -> Func a -> Bind t TTrue a -- bound var
-  BindTuple :: String -> String -> Func (RACTuple a b) -> Bind t TTrue (RACTuple a b) -- bound var
+  BindTuple :: String -> String -> Func (RACTuple a b) -> Bind t TTrue (RACTuple a b) -- RAC only
   NoBind :: Func (a ~> b) -> Bind Local TFalse NSUnit -- no bound var, must be "function"
 
 -- Monad

@@ -3,6 +3,7 @@
 module RCL where
 
 import Language.C.Quote.ObjC
+import Language.C.Quote.Base
 import Language.C hiding (Func)
 import Data.Loc
 import Data.String
@@ -11,6 +12,8 @@ import OM
 
 import UIKit
 import NSObject
+
+import qualified Data.Map as M
 
 import System.IO.Unsafe
 
@@ -104,28 +107,13 @@ divideWithAmountPaddingEdge d p e x = mkOM
     $ BindTuple (unsafePerformIO fresh) (unsafePerformIO fresh)
     $ FFunctionT [cexp|[$id:x divideWithAmount:$d padding:$p fromEdge:$e]|] (FRACTuple FRACSignal FRACSignal)
 
+unpack :: (Bind Local TTrue (RACTuple (RACSignal a) (RACSignal b))) -> (Bind Local TTrue (RACSignal a), Bind Local TTrue (RACSignal b))
+unpack (BindTuple x1 x2 (FFunctionT _ (FRACTuple v1 v2))) = (Bind x1 v1, Bind x2 v2)
 
--- 
--- rcl_alphaSignal :: Exp -> RACSignal FKDouble -> RAC ()
--- rcl_alphaSignal x y = RAC () [Bindless b]
---   where
---     b = RACBind [cexp|RAC($x, rcl_alphaValue) = $y|]
--- 
--- toDouble :: RACSignal FKBool -> RACSignal FKDouble
--- toDouble (RACBool True) = RACDouble 1
--- toDouble (RACBool False) = RACDouble 0
--- toDouble (RACObserve x) = toDouble x
--- toDouble (RACBind x) = RACBind x
--- 
--- animate :: RACSignal FKDouble -> RAC (RACSignal FKDouble)
--- animate x = RAC x [Bindless b]
---   where
---     b = RACBind [cexp|[$x animate]|]
--- 
--- -- [x insetWidth:RCLBox(32.25) height:RCLBox(16.75) nullRect:CGRectZero]
+rcl_alignment :: TypeLC t => View v => Bind Global TTrue v -> [(RCLKeys, Bind t TTrue (RACSignal CGSize))] -> OM ()
+rcl_alignment x xs = addOM (NoBind (FFunction [cexp|RCLAlignment($id:x) = $(mkPairs (M.fromList xs))|]))
 
--- -- [x divideWithAmount:RCLBox(20) padding:self.verticalPadding fromEdge:NSLayoutAttributeBottom];
-
--- 
--- 
--- 
+mkPairs :: TypeLC t => M.Map RCLKeys (Bind t TTrue (RACSignal v)) -> Exp
+mkPairs xs = let l = noLoc
+    in flip ObjCLitDict l
+       $ map (\(k, i) -> (Var (fromString (show k)) l, [cexp|$id:i|])) $ M.toList xs

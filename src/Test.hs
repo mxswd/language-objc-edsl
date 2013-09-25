@@ -21,17 +21,20 @@ test = do
 testP :: OM ()
 testP = do
   -- newTextField >>= rac_textSignal >>= printDescription
-  t <- newTextField
-  s <- newScrollView
+  textField <- newTextField
+  scrollView <- newScrollView
   
-  txt <- rac_textSignal t
+  txt <- rac_textSignal textField
   
-  frame <- rcl_frameSignal t
-  bounds <- rcl_boundsSignal t
+  frame <- rcl_frameSignal textField
+  bounds <- rcl_boundsSignal textField
   
   rect <- rcl_frameSignal contentView >>= insetWidthHeightNull (RCLBox 32.25) (RCLBox 16.75) (CGRectZero)
-  wat <- divideWithAmountPaddingEdge (RCLBox 20) (RCLBox 8) (NSLayoutAttributeBottom) rect
-  printDescription t
+  textRect_scrollRect <- divideWithAmountPaddingEdge (RCLBox 20) (RCLBox 8) (NSLayoutAttributeBottom) rect
+  let (textRect, scrollRect) = unpack textRect_scrollRect
+  rcl_alignment scrollView [(Rcl_rect, scrollRect)]
+  rcl_alignment textField [(Rcl_rect, textRect)]
+  return ()
 
 testP_NSArray :: OM ()
 testP_NSArray = do
