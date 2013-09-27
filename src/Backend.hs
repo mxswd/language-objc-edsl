@@ -30,11 +30,11 @@ instance DefTypes NSInteger where
 instance TypeLC t => ToIdent (Bind t TTrue t1) where
   toIdent x l = Id (nameOf x) l
 
-codeGen :: OM a -> ([BlockItem], [ObjCIfaceDecl])
+codeGen :: OM a -> ([Stm], [ObjCIfaceDecl])
 codeGen pr = let
-  f' :: TypeList Local -> [BlockItem]
-  f' = concat . typeListMap mkBlocks
-  g' :: TypeList 'Global -> [ObjCIfaceDecl]
+  f' :: TypeList Local -> [Stm]
+  f' = map (flip Block noLoc) . typeListMap mkBlocks
+  g' :: TypeList Global -> [ObjCIfaceDecl]
   g' = concat . typeListMap mkProps
 
   in runOM pr f' g'

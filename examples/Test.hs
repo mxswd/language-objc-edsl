@@ -30,7 +30,7 @@ testP = do
   bounds <- rcl_boundsSignal textField
   
   rect <- rcl_frameSignal contentView >>= insetWidthHeightNull (RCLBox 32.25) (RCLBox 16.75) (CGRectZero)
-  textRect_scrollRect <- divideWithAmountPaddingEdge (RCLBox 20) (RCLBox 8) (NSLayoutAttributeBottom) rect
+  textRect_scrollRect <- divideWithAmount_fromEdge (RCLBox 20) (RCLBox 8) (NSLayoutAttributeBottom) rect
   let (textRect, scrollRect) = unpack textRect_scrollRect
   rcl_alignment scrollView [(Rcl_rect, scrollRect)]
   rcl_alignment textField [(Rcl_rect, textRect)]
