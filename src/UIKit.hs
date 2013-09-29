@@ -49,3 +49,12 @@ newScrollView = do
             }|]
   addOM (NoBind (FBlockItem sig))
   mkOM n
+
+instance DefTypes NSTextView where
+  defaultType = (FNSTextView, undefined)
+
+documentView :: Bind s1 TTrue NSScrollView -> OM (Bind Local TTrue NSTextView)
+documentView = undefined
+
+becomeFirstResponder :: Bind s1 TTrue t -> OM ()
+becomeFirstResponder = undefined

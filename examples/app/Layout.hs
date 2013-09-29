@@ -23,4 +23,15 @@ import RCL
   (textRect, scrollRect) <- divideWithAmount_fromEdge (RCLBox 20) (RCLBox 8) (NSLayoutAttributeBottom) rect
   rcl_alignment scrollView [(Rcl_rect, scrollRect)]
   rcl_alignment textField [(Rcl_rect, textRect)]
+  
+  -- view for expression result to be printed
+  -- @property (strong) typename NSTextView *textView;
+  -- self.textView = self.scrollView.documentView;
+  -- [self.textView becomeFirstResponder];
+  textView <- newProp
+  documentView scrollView >>= assign textView
+  becomeFirstResponder textView
+  
   return ()
+  
+

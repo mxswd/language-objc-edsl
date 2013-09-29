@@ -41,9 +41,6 @@ $ifaces:props;
 @property (readonly) typename NSView   *contentView;
 @property (readonly) typename RACSignal  *verticalPadding;
 
-@property (strong) typename NSTextView *textView;
-
-
 @end
 
 
@@ -67,8 +64,6 @@ $ifaces:props;
   
   $stm:onLoad;
   
-  self.textView = self.scrollView.documentView;  
-  [self.textView becomeFirstResponder];
   
 }
 

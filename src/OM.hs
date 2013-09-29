@@ -34,6 +34,7 @@ data Ty = NSBool | NSInteger | NSDouble | NSString | NSArray Ty
         -- UIKit
         | NSView
         | NSTextField
+        | NSTextView
         | NSScrollView
         -- CG
         | CGAlpha
@@ -73,6 +74,7 @@ data Func (a :: Ty) where
   -- UIKit
   FTextField :: Func NSTextField
   FScrollView :: Func NSScrollView
+  FNSTextView :: Func NSTextView
   FNSView :: Func NSView
   -- RAC
   FRACSignal :: Func (RACSignal a)

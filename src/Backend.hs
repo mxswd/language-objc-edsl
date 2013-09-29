@@ -64,6 +64,7 @@ mkProps (Bind x (FArray)) = [mkProp "NSArray" x]
 mkProps (Bind x (FTextField)) = [mkProp "NSTextField" x]
 mkProps (Bind x (FScrollView)) = [mkProp "NSScrollView" x]
 mkProps (Bind x (FNSView)) = [mkProp "NSView" x]
+mkProps (Bind x (FNSTextView)) = [mkProp "NSTextView" x]
 
 -- Take a type to make, and an identifier for it.
 mkProp :: Id -> String -> ObjCIfaceDecl

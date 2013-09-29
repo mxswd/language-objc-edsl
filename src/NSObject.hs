@@ -29,6 +29,10 @@ newInteger x = mkOM $ Bind (unsafePerformIO fresh) (FInteger x)
 printDescription :: TypeLC t => Bind t TTrue d -> OM ()
 printDescription s = addOM (NoBind (FFunction [cexp|NSLog("%@", $id:s)|]))
 
+-- assign the first object to the 2nd
+assign :: Bind s1 TTrue t -> Bind s2 TTrue t -> OM ()
+assign = undefined
+
 -- these are valid expressions (no OM required / pure)
 instance ToExp (Func CGRect) where
   toExp CGRectZero _ = [cexp|CGRectZero|]
