@@ -102,8 +102,8 @@ divideWithAmount_fromEdge :: TypeLC t
                      -> Func (RACSignal CGRect)
                      -> NSLayout
                      -> Bind t TTrue (RACSignal CGSize)
-                     -> OM (Bind Local TTrue (RACTuple (RACSignal CGSize) (RACSignal CGSize)))
-divideWithAmount_fromEdge d p e x = mkOM
+                     -> OM (Bind Local TTrue (RACSignal CGSize), Bind Local TTrue (RACSignal CGSize))
+divideWithAmount_fromEdge d p e x = fmap unpack $ mkOM
     $ BindTuple (unsafePerformIO fresh) (unsafePerformIO fresh)
     $ FFunctionT [cexp|[$id:x divideWithAmount:$d padding:$p fromEdge:$e]|] (FRACTuple FRACSignal FRACSignal)
 
