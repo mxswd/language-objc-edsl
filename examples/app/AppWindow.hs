@@ -2,7 +2,7 @@
 
 -- HSApp: a simple Cocoa app in Haskell
 --
--- Application delegate object, abused as a view controller
+-- Window controller
 
 module AppWindow (objc_initialise) where
 
@@ -65,7 +65,7 @@ $ifaces:props;
 {
   [super windowDidLoad];
   
-  $stm:layout;
+  $stm:onLoad;
   
   self.textView = self.scrollView.documentView;  
   [self.textView becomeFirstResponder];

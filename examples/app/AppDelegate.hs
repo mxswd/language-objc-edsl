@@ -2,7 +2,7 @@
 
 -- HSApp: a simple Cocoa app in Haskell
 --
--- Application delegate object, abused as a view controller
+-- Application delegate object
 
 module AppDelegate (objc_initialise) where
 
@@ -10,16 +10,7 @@ module AppDelegate (objc_initialise) where
 import Language.C.Quote.ObjC
 import Language.C.Inline.ObjC
 
-  -- friends
-import Interpreter
-
 objc_import ["<Cocoa/Cocoa.h>", "AppWindow_objc.h"]
-
-
--- Haskell code used from Objective-C.
-
-launchMsg :: String
-launchMsg = "HSApp did finish launching!"
 
 objc_interface [cunit|
 
@@ -31,7 +22,7 @@ objc_interface [cunit|
 |]
 
 
-objc_implementation ['launchMsg] [cunit|
+objc_implementation [] [cunit|
 
 @implementation AppDelegate
 
@@ -39,7 +30,6 @@ objc_implementation ['launchMsg] [cunit|
 {
   self.mainWindowController = [[AppWindow alloc] init];
   [self.mainWindowController showWindow:self];
-  NSLog(@"%@", launchMsg());
 }
 
 @end

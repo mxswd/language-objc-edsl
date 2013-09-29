@@ -4,7 +4,8 @@ HCFLAGS =
 LDFLAGS = -package template-haskell -package language-c-quote -package language-c-inline -package hint \
           -framework Cocoa -framework ReactiveCocoaLayout -framework ReactiveCocoa -framework Archimedes -optl-ObjC
 
-OBJS = Main.o App.o App_objc.o AppDelegate.o AppDelegate_objc.o Interpreter.o Layout.o RAC.o RCL.o AppWindow.o AppWindow_objc.o
+OBJS = Main.o App.o App_objc.o AppDelegate.o AppDelegate_objc.o AppWindow.o AppWindow_objc.o \
+			 Interpreter.o Layout.o
 
 default: HSApp.app/Contents/MacOS/HSApp
 
@@ -16,7 +17,7 @@ AppDelegate.o: Interpreter.o AppWindow.o
 App.o:
 AppWindow.o: Layout.o
 Main.o: App.o AppDelegate.o
-Layout.o: RAC.o RCL.o
+Layout.o:
 
 App_objc.m: App.o
 AppDelegate_objc.m: AppDelegate.o
