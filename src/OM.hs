@@ -3,7 +3,7 @@
 module OM -- monad
           ( OM, mkOM, addOM, runOM
           -- type class TypeLC
-          , TypeList, TypeLC, typeListMap, nameOf
+          , TypeLC, nameOf
           -- kinds
           , TypeListType(..), TBool(..), Ty(..)
           -- types
@@ -19,11 +19,14 @@ import Language.C (Exp, BlockItem) -- for FFunction to contain an Exp
 -- Semantics container
 data OM a = OM a (TypeList Local) (TypeList Global)
 
-runOM :: OM t -> (TypeList Local -> t1) -> (TypeList Global -> t2) -> (t1, t2)
+runOM :: OM t
+      -> (forall (a :: Ty) (n :: TBool) . Bind Local n a -> [t1])
+      -> (forall (a :: Ty) (n :: TBool) . Bind Global n a -> [t2])
+      -> ([t1], [t2])
 runOM (OM _ ls gs) f g = let
-  ls' = f ls
-  gs' = g gs
-  in (ls', gs')
+  ls' = typeListMap f ls
+  gs' = typeListMap g gs
+  in (concat ls', concat gs')
 
 -- kind
 -- TODO: open type family? so importers can add types?

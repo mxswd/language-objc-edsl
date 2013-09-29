@@ -32,12 +32,13 @@ instance TypeLC t => ToIdent (Bind t TTrue t1) where
 
 codeGen :: OM a -> (Stm, [ObjCIfaceDecl])
 codeGen pr = let
-  f' :: TypeList Local -> Stm
-  f' = flip Block noLoc . concat . typeListMap mkBlocks
-  g' :: TypeList Global -> [ObjCIfaceDecl]
-  g' = concat . typeListMap mkProps
-
-  in runOM pr f' g'
+  f' :: Bind Local n a1 -> [BlockItem]
+  f' = mkBlocks
+  g' :: Bind Global n a1 -> [ObjCIfaceDecl]
+  g' = mkProps
+  res = runOM pr f' g'
+  fst' = flip Block noLoc $ fst res
+  in (fst', snd res)
 
 -- makes blockitems (local bindings)
 mkBlocks :: Bind Local n a -> [BlockItem]
