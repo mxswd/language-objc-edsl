@@ -52,7 +52,7 @@ mkBlocks (BindTuple x1 x2 (FFunctionT s t)) = [[citem|RACTupleUnpack(RACSignal *
 mkBlocks (NoBind (FFunction s)) = [BlockStm (Exp (Just s) noLoc)]
 mkBlocks (NoBind (FBlockItem s)) = [s]
 
-typename :: Func a -> String
+typename :: Func a -> Id
 typename (FBool _) = "NSNumber *"
 typename (FArray) = "NSArray *"
 typename (FInteger _) = "NSNumber *"
