@@ -14,7 +14,6 @@ import RCL
   textField <- newTextField
   scrollView <- newScrollView
   
-  txt <- rac_textSignal textField
   
   -- frame <- rcl_frameSignal textField
   -- bounds <- rcl_boundsSignal textField
@@ -30,7 +29,31 @@ import RCL
   -- [self.textView becomeFirstResponder];
   textView <- newProp
   documentView scrollView >>= assign textView
-  becomeFirstResponder textView
+  -- becomeFirstResponder textView
+  
+  
+  -- txt <- rac_textSignal textField
+  -- rac_subscribeNext txt $ \text -> do
+  --   setString txt ""
+  --   appendString textView text
+  
+  -- // - (void)textFieldDidSend:(NSTextField*)sender
+  -- // {
+  -- //     [self appendOutput: evalExpr([sender stringValue])];
+  -- //     [sender setStringValue: @""];
+  -- // }
+  -- // - (void)appendOutput:(NSString*)text
+  -- // {
+  -- //     NSFont* menlo13 = [NSFont fontWithName: @"Menlo-Regular" size: 13];
+  -- //     NSAttributedString* attrText = [[NSAttributedString alloc]
+  -- //                                     initWithString: text
+  -- //                                       attributes: @{NSFontAttributeName : menlo13}];
+  -- //     
+  -- //     [self.textView.textStorage appendAttributedString: attrText];
+  -- // }
+  -- 
+  
+  
   
   return ()
   

@@ -58,6 +58,7 @@ typename (FBool _) = "NSNumber *"
 typename (FArray) = "NSArray *"
 typename (FInteger _) = "NSNumber *"
 typename (FRACSignal) = "RACSignal *"
+typename (FNSTextView) = "NSTextView *"
 
 -- makes property decls (global bindings)
 mkProps :: Bind Global n a -> [ObjCIfaceDecl]

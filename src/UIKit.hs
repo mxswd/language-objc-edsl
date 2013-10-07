@@ -51,10 +51,11 @@ newScrollView = do
   mkOM n
 
 instance DefTypes NSTextView where
-  defaultType = (FNSTextView, undefined)
+  defaultType = (FNSTextView, [cexp|[[NSTextView alloc] init]|]) -- does this have default...?
 
-documentView :: Bind s1 TTrue NSScrollView -> OM (Bind Local TTrue NSTextView)
-documentView = undefined
+documentView :: TypeLC s1 => Bind s1 TTrue NSScrollView -> OM (Bind Local TTrue NSTextView)
+documentView x = mkOM $ Bind (unsafePerformIO fresh)
+                      $ FFunctionE [cexp|[$id:x documentView]|] (FNSTextView)
 
 becomeFirstResponder :: Bind s1 TTrue t -> OM ()
 becomeFirstResponder = undefined
