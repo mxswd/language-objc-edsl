@@ -130,6 +130,15 @@ class TypeLC (t :: TypeListType) where
   nameOf :: Bind t TTrue a -> String
   mkOM :: forall (a :: Ty) . (Bind t TTrue a) -> OM (Bind t TTrue a)
 
+class ABool (t :: TBool) where
+  choice :: Bind z t x -> (Bind w a t) -> (Bind w a t) -> (Bind w a t)
+
+instance ABool TTrue where
+  choice _ a _ = a
+
+instance ABool TFalse where
+  choice _ _ a = a
+
 instance TypeLC Local where
   typeListNil = TypeListNilL
   typeListAppend TypeListNilL xs = xs
