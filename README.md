@@ -1,13 +1,20 @@
-hrac
-====
+# language-c-edsl
 
-*[EXPERIMENTAL] Monads / RAC / Types*
+**Experimental**
+**Proof of concept**
 
-Since RACSignals send some type of data, that type information can not be
-expressed in Objective-C. So instead we express it in Haskell where
-we can type check it, then generate the correct Objective-C.
+## Description
 
-![](https://pbs.twimg.com/media/BULhQrkCIAAUena.jpg:large)
+An EDSL for extending Objective-C.
 
-By utilizing `language-c-inline` you can write Mac applications this way.
-See `examples` for an example on how.
+It makes use of ReactiveCocoa to provide an FRP abstraction.
+
+It then makes use of ReactiveCocoaLayout to provide a GUI on top of that.
+
+For more details, see my thesis.
+
+## Dependencies
+
+The following repos and branches are required to be `cabal install`-ed:
+
+- `git@github.com:maxpow4h/language-c-quote.git` branch: `quoted-init`

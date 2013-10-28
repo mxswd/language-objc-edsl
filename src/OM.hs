@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds, GADTs, KindSignatures, ExistentialQuantification, TypeOperators, RankNTypes, TypeFamilies #-}
 -- Objective-C Monad
-module OM -- monad
+module OM
           ( OM, mkOM, addOM, runOM
           -- type class TypeLC
           , TypeLC, nameOf
@@ -129,15 +129,6 @@ class TypeLC (t :: TypeListType) where
   typeListMap :: (forall (a :: Ty) (n :: TBool) . Bind t n a -> b) -> TypeList t -> [b]
   nameOf :: Bind t TTrue a -> String
   mkOM :: forall (a :: Ty) . (Bind t TTrue a) -> OM (Bind t TTrue a)
-
-class ABool (t :: TBool) where
-  choice :: Bind z t x -> (Bind w a t) -> (Bind w a t) -> (Bind w a t)
-
-instance ABool TTrue where
-  choice _ a _ = a
-
-instance ABool TFalse where
-  choice _ _ a = a
 
 instance TypeLC Local where
   typeListNil = TypeListNilL

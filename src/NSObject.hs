@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, DataKinds, GADTs, KindSignatures, ExistentialQuantification, QuasiQuotes, TemplateHaskell, StandaloneDeriving, TypeOperators, ImpredicativeTypes, TypeFamilies, ScopedTypeVariables, QuasiQuotes, OverloadedStrings #-}
+{-# LANGUAGE FlexibleInstances, DataKinds, GADTs, KindSignatures, ExistentialQuantification, QuasiQuotes, TemplateHaskell, StandaloneDeriving, TypeOperators, ImpredicativeTypes, TypeFamilies, ScopedTypeVariables, QuasiQuotes, OverloadedStrings, FlexibleContexts #-}
 
 module NSObject where
 
@@ -10,6 +10,9 @@ import Backend
 import OM
 
 import System.IO.Unsafe
+
+type family HsToObjC a :: Ty
+type instance HsToObjC String = NSString
 
 -- Polymorphic "new"
 new :: DefTypes t => OM (Bind Local TTrue t)
@@ -23,6 +26,12 @@ newProp = do
       (dty, din) = defaultType
   addOM (NoBind (FFunction [cexp|self.$id:n = $din|])) -- local
   mkOM $ Bind n dty -- global
+
+constant :: DefTypes (HsToObjC a) => a -> OM (Bind Local TTrue (HsToObjC a))
+constant s = do
+  let n = unsafePerformIO fresh
+      (dty, _) = defaultType
+  mkOM (Bind n dty) -- local
 
 newInteger :: Int -> OM (Bind Local TTrue NSInteger)
 newInteger x = mkOM $ Bind (unsafePerformIO fresh) (FInteger x)
@@ -40,3 +49,7 @@ instance ToExp (Func CGRect) where
 
 instance ToExp (Func (RACSignal CGRect)) where
   toExp (RCLBox d) _ = [cexp|RCLBox($d)|]
+
+-- a string literal
+instance IsString (Func NSString) where
+  fromString s = FString s

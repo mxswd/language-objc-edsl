@@ -50,6 +50,20 @@ newScrollView = do
   addOM (NoBind (FBlockItem sig))
   mkOM n
 
+-- newTextView :: OM (Bind Global TTrue NSTextView)
+-- newTextView = do
+--   let n' = unsafePerformIO fresh
+--       n = Bind n' FTextView :: Bind Global TTrue NSTextView
+--       sig = [citem| {
+--               $id:n = [[NSTextView alloc] initWithFrame:NSZeroRect];
+--               $id:n.wantsLayer = YES;
+--               $id:n.autoresizingMask = NSViewMaxXMargin | NSViewMinYMargin;
+--               [$id:(contentView) addSubview:$id:n];
+--             }|]
+--   addOM (NoBind (FBlockItem sig))
+--   mkOM n
+
+
 instance DefTypes NSTextView where
   defaultType = (FNSTextView, [cexp|[[NSTextView alloc] init]|]) -- does this have default...?
 
@@ -59,3 +73,10 @@ documentView x = mkOM $ Bind (unsafePerformIO fresh)
 
 becomeFirstResponder :: Bind s1 TTrue t -> OM ()
 becomeFirstResponder = undefined
+
+-- TODO: the 2nd TTrue should really be either (to allow constants) with a typeclass
+setString :: TypeLC s1 => TypeLC s2 => Bind s1 TTrue NSTextField -> Bind s2 TTrue NSString -> OM ()
+setString x y = addOM (NoBind (FFunction [cexp|[$id:x setStringValue: $id:y]|]))
+
+appendString :: TypeLC s1 => TypeLC s2 => Bind s1 TTrue NSTextView -> Bind s2 TTrue NSString -> OM ()
+appendString x y = addOM (NoBind (FFunction [cexp|[$id:x.textStorage appendAttributedString: $id:y]|]))

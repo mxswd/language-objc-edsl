@@ -15,6 +15,7 @@ import Data.Unique
 instance IsString Id where
   fromString x = Id x noLoc
 
+-- this should be poly-kinded so defaultType can take arguments
 class DefTypes (a :: Ty) where
   -- fst is a default value, for pattern matching for a type
   -- snd is an expression to initialize objects (NULL doesn't count)
@@ -24,7 +25,10 @@ instance DefTypes (NSArray t) where
   defaultType = (FArray, [cexp|[[NSArray alloc] init]|])
 
 instance DefTypes NSInteger where
-  defaultType = (FInteger 0, undefined)
+  defaultType = (FInteger 0, error "nsinteger deftype unimplemented")
+
+instance DefTypes NSString where
+  defaultType = (FString "", error "nsstring deftype unimplemented")
 
 -- idents
 instance TypeLC t => ToIdent (Bind t TTrue t1) where
@@ -46,6 +50,7 @@ mkBlocks (Bind x (FBool True)) = [[citem|typename NSNumber *$id:x = @(YES);|]]
 mkBlocks (Bind x (FBool False)) = [[citem|typename NSNumber *$id:x = @(NO);|]]
 mkBlocks (Bind x (FInteger b)) = [[citem|typename NSNumber *$id:x = @($b);|]]
 mkBlocks (Bind x (FArray)) = [[citem|typename NSArray *$id:x = [[NSArray alloc] init];|]]
+mkBlocks (Bind x (FString s)) = [[citem|typename NSString *$id:x = @$string:s;|]]
 mkBlocks (Bind x (FFunction s)) = [[citem|$id:x = $s;|]]
 mkBlocks (Bind x (FFunctionE s ty)) = let typ = typename ty
   in [[citem|typename $id:typ $id:x = $s;|]]
@@ -77,4 +82,16 @@ mkProp t s' = ObjCIfaceProp [ObjCStrong noLoc]
       q = Field (Just (Id (s') noLoc))
                 (Just (Ptr [] (DeclRoot noLoc) noLoc)) (Nothing) noLoc
 
+-- instance (TypeLC s2 , ABool b) => ToExp (Bind s2 b f) where
+  -- true so use the identifier
+  -- false use constant
+  -- toExp x _ = [cexp|$id:x|]
+
+-- instance TypeLC s2 => ToExp (Bind s2 TFalse f) where
+--   -- true so use the identifier
+--   -- false use constant
+--   toExp x _ = undefined
+
+-- instance ToExp (Bind s2 fu f) where
+  
 fresh = fmap (("f_" ++) . show . hashUnique) newUnique
